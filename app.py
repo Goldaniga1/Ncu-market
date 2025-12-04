@@ -23,21 +23,21 @@ app = Flask(__name__)
 # 👇 修改讀取方式：改成 os.getenv('變數名稱')
 app.secret_key = os.getenv('SECRET_KEY')
 
-# ================= 📧 Gmail 設定 =================
+# ================= 📧 Gmail 設定 (SSL 版) =================
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-# 👇 補上這一行，明確告訴它不要用 SSL (因為我們用的是 TLS)
-app.config['MAIL_USE_SSL'] = False 
 
-# 從環境變數讀取帳密
+# 👇 修改：改用 Port 465
+app.config['MAIL_PORT'] = 465 
+
+# 👇 修改：關閉 TLS，開啟 SSL (這兩個是互斥的)
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
+
+# 環境變數讀取 (保持不變)
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = ('NCU市集管理員', os.getenv('MAIL_USERNAME'))
 app.config['MAIL_ASCII_ATTACHMENTS'] = False
-
-mail = Mail(app)
-# =================================================
 
 # ================= 設定區 =================
 UPLOAD_FOLDER = 'static/uploads'
