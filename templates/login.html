@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>登入 - NCU 二手市集</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="flex-direction: column; align-items: center;">
+    <div class="container" style="max-width: 400px; margin-top: 50px;">
+        
+        <div style="margin-bottom: 20px;">
+            <a href="{{ url_for('home') }}" style="text-decoration: none; color: #666; font-size: 0.9em;">
+                ← 回首頁逛逛
+            </a>
+        </div>
+
+        <h2 style="text-align: center;">登入 NCU 市集</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    
+                    {% if category == 'success' %}
+                        <div style="padding:10px; border-radius:5px; margin-bottom:10px; background: #d4edda; color: #155724;">
+                            {{ message }}
+                        </div>
+                    {% else %}
+                        <div style="padding:10px; border-radius:5px; margin-bottom:10px; background: #ffdddd; color: #721c24;">
+                            {{ message }}
+                        </div>
+                    {% endif %}
+
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="upload-card">
+            <form method="POST">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="example@ncu.edu.tw" required>
+                </div>
+                <div class="form-group">
+                    <label>密碼</label>
+                    <input type="password" name="password" required>
+                </div>
+                <button type="submit" class="btn-primary">登入</button>
+            </form>
+            <p style="text-align: center; margin-top: 15px;">
+                還沒有帳號？ <a href="{{ url_for('register') }}">去註冊</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

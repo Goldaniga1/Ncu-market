@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的市集 - NCU 二手市集</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* === 優化二：分頁籤 (Tabs) 樣式 === */
+        .tab-container { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+        
+        .tab-btn {
+            padding: 12px 25px; cursor: pointer; font-weight: bold; color: #888;
+            border-bottom: 3px solid transparent; transition: 0.3s; font-size: 1.1em;
+        }
+        
+        .tab-btn:hover { color: #333; background: #f9f9f9; }
+        
+        /* 賣東西 Tab 被選中 */
+        .tab-btn.active { color: #2c3e50; border-bottom: 3px solid #2c3e50; }
+        
+        /* 徵東西 Tab 被選中 (橘色) */
+        .tab-btn.active-req { color: #e67e22; border-bottom: 3px solid #e67e22; }
+
+        /* 隱藏區塊用 */
+        .tab-content { display: none; animation: fadeIn 0.4s; }
+
+        /* === 優化三：視覺微調 === */
+        /* 1. 更柔和的卡片陰影 */
+        .product-card, .req-card {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+            border: 1px solid #eee;
+            border-radius: 12px; /* 更圓潤的卡片 */
+            overflow: hidden;
+        }
+
+        /* 2. 圖片強制 4:3 比例，整齊劃一 */
+        .product-img-dashboard {
+            width: 100%; 
+            aspect-ratio: 4/3; 
+            object-fit: cover;
+        }
+
+        /* 3. 膠囊狀狀態標籤 */
+        .status-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 20px; 
+            font-size: 0.85em; font-weight: bold; margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="margin-bottom: 20px;">
+            <a href="{{ url_for('home') }}" style="text-decoration: none; color: #666;">← 回首頁</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'success' %}
+                        <div style="padding:10px; border-radius:8px; margin-bottom:15px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb;">
+                            {{ message }}
+                        </div>
+                    {% else %}
+                        <div style="padding:10px; border-radius:8px; margin-bottom:15px; background: #ffdddd; color: #721c24; border: 1px solid #f5c6cb;">
+                            {{ message }}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h1>我的市集管理 💼</h1>
+        <p style="margin-bottom: 30px; color: #666;">嗨，{{ current_user.name }}！管理你的販售與徵求。</p>
+
+        <div class="tab-container">
+            <div class="tab-btn active" onclick="switchTab('products', this)">📦 我賣的商品</div>
+            <div class="tab-btn" onclick="switchTab('requests', this)">🙋‍♂️ 我徵的物品</div>
+        </div>
+
+        <div id="tab-products" class="tab-content" style="display: block;">
+            <div class="product-grid">
+                {% for p in products %}
+                    <div class="product-card" 
+                        {% if p['status'] == 'sold' %} style="opacity: 0.7; background: #f9f9f9;" {% endif %}>
+                        
+                        {% if p['image_filename'] %}
+                            {% set first_img = p['image_filename'].split(',')[0] %}
+                            
+                            {% if p['status'] == 'sold' %}
+                                <img src="{{ url_for('static', filename='uploads/' + first_img) }}" class="product-img-dashboard"
+                                     style="filter: grayscale(100%);">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='uploads/' + first_img) }}" class="product-img-dashboard">
+                            {% endif %}
+                        {% else %}
+                            <div class="product-img-dashboard" style="display:flex;align-items:center;justify-content:center;color:#ccc;background:#eee;">無圖片</div>
+                        {% endif %}
+
+                        <div class="product-info">
+                            <div style="font-weight: bold; font-size: 1.1em;">{{ p['name'] }}</div>
+                            <div class="price-tag" style="font-size: 1.2em;">${{ p['price'] }}</div>
+                            
+                            {% if p['status'] == 'sold' %}
+                                <div class="status-badge" style="background: #95a5a6; color: white;">已售出 SOLD</div>
+                            {% else %}
+                                <div class="status-badge" style="background: #27ae60; color: white;">販售中 ing</div>
+                            {% endif %}
+
+                            <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; 
+                                        display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                
+                                {% if p['status'] == 'active' %}
+                                    <form action="{{ url_for('mark_sold', product_id=p['id']) }}" method="POST" style="margin:0;">
+                                        <button type="submit" class="btn-primary" 
+                                                style="background-color: #f39c12; width: 100%; font-size: 0.9em; padding: 8px; border-radius: 8px;">
+                                            🤝 已售出
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <form action="{{ url_for('mark_active', product_id=p['id']) }}" method="POST" style="margin:0;">
+                                        <button type="submit" class="btn-primary" 
+                                                style="background-color: #27ae60; width: 100%; font-size: 0.9em; padding: 8px; border-radius: 8px;">
+                                            🔄 重上架
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                <form action="{{ url_for('delete_product', product_id=p['id']) }}" method="POST" style="margin:0;">
+                                    <button type="submit" onclick="return confirm('真的要刪除嗎？紀錄會消失喔！');" 
+                                            style="width: 100%; padding: 8px; background-color: white; color: #e74c3c; 
+                                                   border: 1px solid #e74c3c; border-radius: 8px; cursor: pointer; font-size: 0.9em; transition: 0.2s;">
+                                        🗑️ 刪除
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div style="grid-column: 1 / -1; text-align: center; color: #888; padding: 40px;">
+                        <p>你還沒賣過東西喔！</p>
+                        <a href="{{ url_for('home') }}" class="btn-primary" style="display:inline-block; width:auto; border-radius: 20px;">去上架商品</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+
+        <div id="tab-requests" class="tab-content">
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 50px;">
+                {% for r in requests %}
+                    <div class="req-card" 
+                        {% if r['status'] == 'fulfilled' %} style="background: #f9f9f9; opacity: 0.7;" {% else %} style="background: #fff;" {% endif %}>
+                
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div>
+                                <span style="font-weight: bold; font-size: 1.2em; color: #333;">{{ r['title'] }}</span>
+                                <span style="color: #666; margin-left: 10px;">預算：{{ r['budget'] }}</span>
+                            
+                                {% if r['status'] == 'fulfilled' %}
+                                    <span class="status-badge" style="background: #bdc3c7; color: white; margin-left: 10px;">已徵到</span>
+                                {% else %}
+                                    <span class="status-badge" style="background: #e67e22; color: white; margin-left: 10px;">徵求中</span>
+                                {% endif %}
+                            </div>
+
+                            <div style="display: flex; gap: 8px;">
+                            
+                                {% if r['status'] == 'active' %}
+                                    <form action="{{ url_for('fulfill_request', req_id=r['id']) }}" method="POST" style="margin: 0;">
+                                        <button type="submit" class="btn-primary" 
+                                                style="background: #27ae60; padding: 6px 15px; font-size: 0.9em; width: auto; border-radius: 20px;">
+                                            ✅ 已徵到
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                <form action="{{ url_for('delete_request', req_id=r['id']) }}" method="POST" style="margin: 0;">
+                                    <button type="submit" onclick="return confirm('確定要刪除這筆徵求紀錄嗎？');" 
+                                            class="btn-primary" 
+                                            style="background: #e74c3c; padding: 6px 15px; font-size: 0.9em; width: auto; border-radius: 20px;">
+                                        🗑️ 刪除
+                                    </button>
+                                </form>
+                            </div>
+
+                        </div>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; color: #888; padding: 40px;">
+                        <p>目前沒有正在徵求的項目。</p>
+                        <a href="{{ url_for('home') }}" class="btn-primary" style="display:inline-block; width:auto; border-radius: 20px;">去發布徵求</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchTab(tabName, btn) {
+            // 1. 隱藏所有內容區塊
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            
+            // 2. 移除所有按鈕的 active 狀態
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('active');
+                el.classList.remove('active-req');
+            });
+
+            // 3. 顯示被選中的內容區塊
+            document.getElementById('tab-' + tabName).style.display = 'block';
+            
+            // 4. 幫被點擊的按鈕加上 active 樣式
+            if (tabName === 'requests') {
+                btn.classList.add('active-req'); // 橘色樣式
+            } else {
+                btn.classList.add('active');     // 深藍色樣式
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NCU 轉轉</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1 style="margin: 0;">NCU 轉轉 🛍️</h1>
+            
+            {% if current_user.is_authenticated %}
+                <div style="text-align: right; display: flex; align-items: center; justify-content: flex-end; flex-wrap: nowrap;">
+                    
+                    <span style="margin-right: 5px; white-space: nowrap;">嗨，<b>{{ current_user.name }}</b></span>
+                    
+                    <a href="{{ url_for('dashboard') }}" 
+                       style="color: #0066cc; font-weight:bold; margin-left: 10px; text-decoration: none; 
+                              padding: 10px 5px; display: inline-block; white-space: nowrap;"> 
+                        💼 <span class="desktop-only">我的市集</span> 
+                    </a>
+
+                    <a href="{{ url_for('inbox') }}" 
+                       style="position: relative; color: #8e44ad; font-weight:bold; margin-left: 10px; text-decoration: none; 
+                              padding: 10px 5px; display: inline-block; white-space: nowrap;">
+                        💬 訊息
+                        {% if unread_count > 0 %}
+                            <span style="position: absolute; top: 0px; right: -5px; background: red; color: white; 
+                                         border-radius: 50%; padding: 2px 6px; font-size: 0.7em;">
+                                {{ unread_count }}
+                            </span>
+                        {% endif %}
+                    </a>
+
+                    <a href="{{ url_for('logout') }}" 
+                       style="color: #666; font-size: 0.9em; margin-left: 10px; padding: 10px 5px; display: inline-block; white-space: nowrap;">
+                        登出
+                    </a>
+                </div>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn-primary" style="width: auto; padding: 8px 15px; text-decoration: none;">登入 / 註冊</a>
+            {% endif %}
+        </div>
+
+        <form action="/" method="GET" class="search-box">
+            <input type="text" name="q" placeholder="搜尋商品..." value="{{ search_query if search_query }}">
+            <button type="submit">🔍 搜尋</button>
+        </form>
+
+        {% if current_user.is_authenticated %}
+            <div class="upload-card">
+                {% if current_user.is_authenticated %}
+                    <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                    
+                        <button onclick="toggleUpload()" 
+                                style="flex: 1; padding: 15px; border: none; border-radius: 12px; 
+                                   background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); 
+                                   color: white; font-size: 1.1em; font-weight: bold; cursor: pointer;
+                                   box-shadow: 0 4px 6px rgba(44, 62, 80, 0.3); transition: transform 0.1s;
+                                   display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <span style="background: rgba(255,255,255,0.2); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">＋</span>
+                            我要賣東西
+                        </button>
+
+                        <a href="{{ url_for('request_board') }}" 
+                           style="flex: 1; padding: 15px; border: none; border-radius: 12px; 
+                              background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%); 
+                              color: white !important; font-size: 1.1em; font-weight: bold; cursor: pointer;
+                              box-shadow: 0 4px 6px rgba(230, 126, 34, 0.3); text-decoration: none;
+                              display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <span style="font-size: 1.2em;">🙋‍♂️</span>
+                            去徵物公佈欄
+                        </a>
+
+                    </div>
+
+                    <div id="uploadArea" class="upload-card" style="display: none; animation: fadeIn 0.5s;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin-top:0;">我要賣東西</h3>
+                        <span onclick="toggleUpload()" style="cursor: pointer; font-size: 1.5em; color: #999;">&times;</span>
+                    </div>
+                
+                    <form method="POST" action="/" enctype="multipart/form-data" 
+                        onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerHTML='🚀 上架中...';">
+                    
+                        <div class="form-group">
+                            <label>商品名稱</label>
+                            <input type="text" name="product_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>預售價格</label>
+                            <input type="number" name="product_price" required>
+                        </div>
+                        <div class="form-group">
+                            <label>商品描述</label>
+                            <textarea name="product_desc" placeholder="請輸入商品描述，或勾選下方 AI 自動生成..." 
+                                    style="width: 95%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; height: 60px; font-family: inherit;"></textarea>
+                            <div style="margin-top: 8px; display: flex; align-items: center;">
+                                <input type="checkbox" name="use_ai" id="ai_check" style="width: auto; margin-right: 8px;" checked>
+                                <label for="ai_check" style="margin: 0; color: #0066cc; cursor: pointer; font-size: 0.9em;">✨ 使用 AI 自動生成文案</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>聯絡方式</label>
+                            <div class="contact-group">
+                                <select name="contact_type">
+                                    <option value="line">Line ID</option>
+                                    <option value="phone">手機號碼</option>
+                                </select>
+                                <input type="text" name="contact_info" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>商品照片 (可多選，最多10張)</label>
+                            <input type="file" name="product_image" accept="image/*" multiple>
+                        </div>
+                        <button type="submit" class="btn-primary">立即上架</button>
+                    </form>
+                </div>
+
+                <script>
+                    function toggleUpload() {
+                        var x = document.getElementById("uploadArea");
+                        if (x.style.display === "none") {
+                            x.style.display = "block";
+                        } else {
+                            x.style.display = "none";
+                        }
+                    }
+                </script>
+            {% else %}
+                <div class="upload-card" style="text-align: center; padding: 40px; color: #666;">
+                    </div>
+            {% endif %}
+            </div>
+        {% else %}
+            <div class="upload-card" style="text-align: center; padding: 40px; color: #666;">
+                <h3>想要賣東西嗎？</h3>
+                <p>請先登入中央大學信箱，即可上架商品並查看賣家聯絡方式。</p>
+                <a href="{{ url_for('login') }}" class="btn-primary" style="display:inline-block; width:auto; margin-top:10px; text-decoration:none;">前往登入</a>
+            </div>
+        {% endif %}
+
+        <h3>📦 商品列表</h3>
+        
+        <div class="product-grid">
+            {% for p in products %}
+                <div class="product-card" 
+                    {% if p['status'] == 'sold' %} style="opacity: 0.6;" {% endif %}>
+                    
+                    <div style="position: relative;">
+                        
+                        {% if p['image_filename'] %}
+                            {% set image_list = p['image_filename'].split(',') %}
+                            
+                            <div style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; 
+                                        scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
+                                
+                                {% for img_name in image_list %}
+                                    
+                                    {% if p['status'] == 'sold' %}
+                                        <img src="{{ url_for('static', filename='uploads/' + img_name) }}" 
+                                             class="product-img"
+                                             data-images="{{ p['image_filename'] }}"
+                                             data-index="{{ loop.index0 }}"
+                                             onclick="openGallery(this)"
+                                             style="width: 100%; flex-shrink: 0; scroll-snap-align: start; object-fit: cover; 
+                                                    filter: grayscale(100%); cursor: zoom-in;">
+                                    {% else %}
+                                        <img src="{{ url_for('static', filename='uploads/' + img_name) }}" 
+                                             class="product-img"
+                                             data-images="{{ p['image_filename'] }}"
+                                             data-index="{{ loop.index0 }}"
+                                             onclick="openGallery(this)"
+                                             style="width: 100%; flex-shrink: 0; scroll-snap-align: start; object-fit: cover; 
+                                                    cursor: zoom-in;">
+                                    {% endif %}
+
+                                {% endfor %}
+                            </div>
+
+                            {% if image_list|length > 1 %}
+                                <div style="position: absolute; bottom: 10px; right: 10px; 
+                                            background: rgba(0,0,0,0.6); color: white; padding: 2px 8px; 
+                                            border-radius: 12px; font-size: 0.75em; backdrop-filter: blur(2px);">
+                                    共 {{ image_list|length }} 張
+                                </div>
+                            {% endif %}
+
+                        {% else %}
+                            <div class="product-img" style="display:flex;align-items:center;justify-content:center;color:#ccc;">無圖片</div>
+                        {% endif %}
+                        {% if p['status'] == 'sold' %}
+                             {% endif %}
+                    </div>
+
+                    <div class="product-info">
+                        <div style="font-weight: bold; margin-bottom: 5px;">{{ p['name'] }}</div>
+                        <div style="font-size: 0.85em; color: #888;">賣家：{{ p['seller_name'] }}</div>
+                        <div class="price-tag">${{ p['price'] }}</div>
+                        
+                        <div style="font-size: 0.8em; color: #666; margin: 5px 0;">
+                            ✨ {{ p['ai_text'] }}
+                        </div>
+
+                        {% if p['status'] == 'active' %}
+                            
+                            {% if current_user.is_authenticated %}
+                                
+                                {% if p['user_id'] != current_user.id %}
+                                    <a href="{{ url_for('chat_room', target_id=p['user_id']) }}" 
+                                       class="btn-contact" 
+                                       style="background-color: #8e44ad; color: white; margin-bottom: 5px;">
+                                        💬 站內私訊 (Beta)
+                                    </a>
+                                {% endif %}
+
+                                {% if p['contact_info'] %}
+                                    {% if p['contact_type'] == 'line' %}
+                                        <a href="https://line.me/ti/p/~{{ p['contact_info'] }}" target="_blank" class="btn-contact btn-line">
+                                            💬 私訊 (Line)
+                                        </a>
+                                    {% else %}
+                                        <a href="tel:{{ p['contact_info'] }}" class="btn-contact btn-phone">
+                                            📞 撥打電話
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+
+                            {% else %}
+                                <div style="text-align: center; background: #eee; padding: 8px; font-size: 0.8em; border-radius: 5px; margin-top: 8px; color: #666;">
+                                    登入後查看聯絡資訊
+                                </div>
+                            {% endif %}
+
+                        {% else %}
+                            <div style="text-align: center; background: #ddd; padding: 8px; font-size: 0.8em; border-radius: 5px; margin-top: 8px; color: #555; font-weight: bold;">
+                                {% if p['sold_at'] %}
+                                    ❌ {{ p['sold_at'] | time_since }}
+                                {% else %}
+                                    ❌ 此商品已售出
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div style="grid-column: 1 / -1; text-align: center; color: #888;">目前沒有商品</div>
+            {% endfor %}
+        </div>
+    </div>
+    <div id="lightbox" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+                background:rgba(0,0,0,0.95); z-index:9999; justify-content:center; align-items:center;">
+        
+        <div onclick="closeLightbox()" style="position: absolute; top: 20px; right: 20px; color: white; font-size: 2em; cursor: pointer; z-index: 10001;">&times;</div>
+
+        <div onclick="changeImage(-1)" style="position: absolute; left: 10px; color: white; font-size: 3em; cursor: pointer; user-select: none; padding: 20px; z-index: 10001;">&#10094;</div>
+
+        <img id="lightbox-img" src="" style="max-width:90%; max-height:90%; object-fit:contain; border-radius: 5px; transition: opacity 0.2s;">
+
+        <div onclick="changeImage(1)" style="position: absolute; right: 10px; color: white; font-size: 3em; cursor: pointer; user-select: none; padding: 20px; z-index: 10001;">&#10095;</div>
+
+        <div id="lightbox-counter" style="position: absolute; bottom: 20px; color: white; font-size: 1em; background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px;">
+            1 / 1
+        </div>
+    </div>
+
+    <script>
+        let currentImages = []; // 存目前的圖片清單
+        let currentIndex = 0;   // 存目前的索引
+
+        function openGallery(element) {
+            // 從 HTML 的 data- 屬性中抓出資料
+            var filenameStr = element.getAttribute('data-images');
+            var index = parseInt(element.getAttribute('data-index')); // 轉成數字
+
+            // 後面的邏輯跟原本一樣
+            currentImages = filenameStr.split(',');
+            currentIndex = index;
+            updateLightbox();
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
+        function changeImage(step) {
+            currentIndex += step;
+            // 循環播放邏輯
+            if (currentIndex >= currentImages.length) currentIndex = 0;
+            if (currentIndex < 0) currentIndex = currentImages.length - 1;
+            updateLightbox();
+        }
+
+        function updateLightbox() {
+            const imgElement = document.getElementById('lightbox-img');
+            const counterElement = document.getElementById('lightbox-counter');
+            
+            // 設定圖片路徑 (記得加上 static/uploads/)
+            imgElement.src = "/static/uploads/" + currentImages[currentIndex];
+            
+            // 更新計數器
+            counterElement.innerText = (currentIndex + 1) + " / " + currentImages.length;
+        }
+
+        // 支援鍵盤左右鍵
+        document.addEventListener('keydown', function(e) {
+            if (document.getElementById('lightbox').style.display === 'flex') {
+                if (e.key === 'ArrowLeft') changeImage(-1);
+                if (e.key === 'ArrowRight') changeImage(1);
+                if (e.key === 'Escape') closeLightbox();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>輸入驗證碼 - NCU 二手市集</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="flex-direction: column; align-items: center;">
+    <div class="container" style="max-width: 400px; margin-top: 50px;">
+        <h2 style="text-align: center;">信箱驗證 📧</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    
+                    {% if category == 'success' %}
+                        <div style="padding:10px; border-radius:5px; margin-bottom:10px; background: #d4edda; color: #155724;">
+                            {{ message }}
+                        </div>
+                    {% else %}
+                        <div style="padding:10px; border-radius:5px; margin-bottom:10px; background: #ffdddd; color: #721c24;">
+                            {{ message }}
+                        </div>
+                    {% endif %}
+
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="upload-card">
+            <p>驗證碼已寄送到您的信箱，請輸入 6 位數代碼。</p>
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label>驗證碼</label>
+                    <input type="text" name="otp" placeholder="例如: 123456" required style="text-align: center; letter-spacing: 5px; font-size: 1.2em;">
+                </div>
+                <button type="submit" class="btn-primary">確認驗證</button>
+            </form>
+            
+            <p style="text-align: center; margin-top: 15px;">
+                <a href="{{ url_for('register') }}">重新註冊</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

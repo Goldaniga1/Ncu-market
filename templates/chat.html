@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>與 {{ target_user['name'] }} 聊天</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        .chat-box { height: 60vh; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; }
+        .message { max-width: 70%; padding: 8px 12px; border-radius: 15px; margin-bottom: 8px; font-size: 0.95em; position: relative; }
+        .message.mine { align-self: flex-end; background-color: #0084ff; color: white; border-bottom-right-radius: 2px; }
+        .message.theirs { align-self: flex-start; background-color: #f1f0f0; color: black; border-bottom-left-radius: 2px; }
+        .message-time { font-size: 0.7em; margin-top: 3px; opacity: 0.7; text-align: right; }
+        .input-area { display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <a href="{{ url_for('inbox') }}" style="text-decoration:none;">← 返回列表</a>
+            <h3 style="margin:0;">{{ target_user['name'] }}</h3>
+            <div style="width: 60px;"></div>
+        </div>
+
+        <div class="chat-box" id="chatBox">
+            {% for msg in history %}
+                <div class="message {{ 'mine' if msg['sender_id'] == current_user.id else 'theirs' }}">
+                    {{ msg['content'] }}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="msgInput" placeholder="輸入訊息..." style="flex-grow: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc;">
+            <button id="sendBtn" onclick="sendMessage()" class="btn-primary" 
+                    style="width: auto; border-radius: 20px; padding: 0 20px; white-space: nowrap;">
+                傳送
+            </button>
+        </div>
+    </div>
+
+    <script>
+        var socket = io();
+        var targetId = Number("{{ target_id }}");
+        var myId = Number("{{ current_user.id }}");
+        var chatBox = document.getElementById('chatBox');
+
+        // 1. 連線後加入房間
+        socket.on('connect', function() {
+            socket.emit('join_chat', {target_id: targetId});
+            scrollToBottom();
+        });
+
+        // 2. 接收新訊息 (即時！)
+        socket.on('new_message', function(data) {
+            var msgDiv = document.createElement('div');
+            if (data.sender_id == myId) {
+                msgDiv.className = 'message mine';
+                // 👇 如果是自己傳的訊息回來了，恢復按鈕狀態，並清空輸入框
+                var btn = document.getElementById('sendBtn');
+                btn.disabled = false;
+                btn.innerText = "傳送";
+                document.getElementById('msgInput').value = ""; // 確定成功才清空
+                document.getElementById('msgInput').focus();    // 把游標放回去
+            } else {
+                msgDiv.className = 'message theirs';
+            }
+            msgDiv.innerText = data.content;
+            chatBox.appendChild(msgDiv);
+            scrollToBottom();
+        });
+
+        // 3. 傳送訊息
+        function sendMessage() {
+            var input = document.getElementById('msgInput');
+            var btn = document.getElementById('sendBtn'); // 抓取按鈕
+            var msg = input.value;
+            
+            if (msg.trim() !== "") {
+                // 👇 立即鎖住按鈕，改變文字
+                btn.disabled = true;
+                btn.innerText = "傳送中...";
+                
+                socket.emit('send_message', {target_id: targetId, message: msg});
+                // 注意：這裡不要清空 input，等 server 確認收到 (new_message) 再清空
+            }
+        }
+
+        // 按 Enter 也能發送
+        document.getElementById('msgInput').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") sendMessage();
+        });
+
+        function scrollToBottom() {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>

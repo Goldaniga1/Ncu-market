@@ -1,0 +1,149 @@
+/* static/style.css */
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #f0f2f5;
+    margin: 0;
+    padding: 10px; /* 手機版邊距小一點 */
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    background-color: transparent; /* 背景透明，因為我們要用卡片 */
+    width: 100%;
+    max-width: 600px; /*稍微寬一點*/
+}
+
+h1 { text-align: center; color: #333; }
+
+/* 上架表單區塊 */
+.upload-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.form-group { margin-bottom: 15px; }
+label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+input { width: 95%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+
+button.btn-primary {
+    width: 100%;
+    padding: 12px;
+    background-color: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* 搜尋框樣式 */
+.search-box {
+    display: flex;
+    margin-bottom: 20px;
+}
+.search-box input {
+    border-radius: 8px 0 0 8px;
+    border-right: none;
+}
+.search-box button {
+    width: 80px;
+    background: #555;
+    color: white;
+    border: none;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+}
+
+/* ✨ 網格佈局系統 (Grid System) - 重點在這裡 */
+.product-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 1fr 1fr 代表切成兩等份 */
+    gap: 15px; /* 卡片之間的間距 */
+}
+
+/* 商品卡片樣式 */
+.product-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column; /* 上下排列 */
+}
+
+.product-img {
+    width: 100%;
+    height: 150px; /* 固定圖片高度，才不會參差不齊 */
+    object-fit: cover; /* 讓圖片填滿且不變形 */
+    background-color: #eee;
+}
+
+.product-info {
+    padding: 10px;
+    flex-grow: 1;
+}
+
+.price-tag {
+    color: #e74c3c;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.contact-btn {
+    display: block;
+    background: #e8f0fe;
+    color: #1967d2;
+    text-align: center;
+    padding: 5px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+/* 聯絡按鈕共用樣式 */
+.btn-contact {
+    display: block;
+    text-align: center;
+    padding: 8px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.95em;
+    margin-top: 8px;
+    font-weight: bold;
+    transition: opacity 0.2s;
+}
+.btn-contact:hover { opacity: 0.9; }
+
+/* Line 專用樣式 (綠色) */
+.btn-line {
+    background-color: #06c755;
+    color: white;
+}
+
+/* 電話 專用樣式 (藍色) */
+.btn-phone {
+    background-color: #3498db;
+    color: white;
+}
+
+/* 讓上架表單的聯絡資訊變兩欄 */
+.contact-group {
+    display: flex;
+    gap: 10px;
+}
+.contact-group select {
+    width: 35%; /* 下拉選單佔 35% */
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+.contact-group input {
+    width: 65%; /* 輸入框佔 65% */
+}

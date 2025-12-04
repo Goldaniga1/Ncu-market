@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>徵物公佈欄 - NCU 二手市集</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* 徵物專用的卡片樣式 */
+        .req-card {
+            background: #fff; border-left: 5px solid #e67e22; /* 橘色代表徵求 */
+            padding: 15px; margin-bottom: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .req-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .req-title { font-size: 1.2em; font-weight: bold; color: #333; }
+        .req-budget { background: #e67e22; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.9em; }
+        .req-meta { font-size: 0.85em; color: #888; margin-bottom: 10px; }
+        .req-desc { color: #555; line-height: 1.5; background: #fafafa; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <a href="{{ url_for('home') }}" style="text-decoration:none; color:#666;">← 回商品市集</a>
+            <h1 style="margin: 0; color: #e67e22;">🙋‍♂️ 徵物公佈欄</h1>
+            <div>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('dashboard') }}" style="text-decoration:none;">💼 我的管理</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn-primary" style="width:auto;">登入</a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if current_user.is_authenticated %}
+            <button onclick="toggleReqForm()" class="btn-primary" style="background-color: #e67e22; margin-bottom: 20px;">
+                ➕ 我想徵東西
+            </button>
+
+            <div id="reqFormArea" class="upload-card" style="display: none; border-top: 3px solid #e67e22;">
+                <h3 style="margin-top:0;">發佈徵求需求</h3>
+                <form method="POST">
+                    <div class="form-group">
+                        <label>我想徵...</label>
+                        <input type="text" name="title" placeholder="例如：微積分課本、二手螢幕" required>
+                    </div>
+                    <div class="form-group">
+                        <label>預算範圍</label>
+                        <input type="text" name="budget" placeholder="例如：500元以內、可議價" required>
+                    </div>
+                    <div class="form-group">
+                        <label>詳細說明</label>
+                        <textarea name="description" placeholder="請描述物品狀況要求，例如：八成新、無筆跡..." style="width: 95%; height: 80px; padding: 10px;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>聯絡方式</label>
+                        <div class="contact-group">
+                            <select name="contact_type">
+                                <option value="line">Line ID</option>
+                                <option value="phone">手機號碼</option>
+                            </select>
+                            <input type="text" name="contact_info" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary" style="background-color: #e67e22;">張貼公告</button>
+                </form>
+            </div>
+            <script>
+                function toggleReqForm() {
+                    var x = document.getElementById("reqFormArea");
+                    x.style.display = (x.style.display === "none") ? "block" : "none";
+                }
+            </script>
+        {% endif %}
+
+        {% for r in requests %}
+            <div class="req-card">
+                <div class="req-header">
+                    <div class="req-title">{{ r['title'] }}</div>
+                    <div class="req-budget">💰 預算：{{ r['budget'] }}</div>
+                </div>
+                <div class="req-meta">
+                    <span style="margin-right: 15px;">👤 徵求者：{{ r['buyer_name'] }}</span>
+                    <span>🕒 {{ r['created_at'] }}</span>
+                </div>
+                <div class="req-desc">
+                    {{ r['description'] }}
+                </div>
+                
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    {% if current_user.is_authenticated %}
+                        {% if r['user_id'] != current_user.id %}
+                            <a href="{{ url_for('chat_room', target_id=r['user_id']) }}" class="btn-contact" style="background-color: #8e44ad; color: white; width: auto; padding: 5px 15px;">
+                                💬 私訊他
+                            </a>
+                            {% if r['contact_type'] == 'line' %}
+                                <a href="https://line.me/ti/p/~{{ r['contact_info'] }}" target="_blank" class="btn-contact btn-line" style="width: auto; padding: 5px 15px;">Line</a>
+                            {% else %}
+                                <a href="tel:{{ r['contact_info'] }}" class="btn-contact btn-phone" style="width: auto; padding: 5px 15px;">電話</a>
+                            {% endif %}
+                        {% endif %}
+                    {% else %}
+                        <span style="color:#888; font-size:0.9em;">(登入後查看聯絡方式)</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div style="text-align: center; color: #999; margin-top: 50px;">
+                目前沒有人在徵東西，你是第一個！
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
