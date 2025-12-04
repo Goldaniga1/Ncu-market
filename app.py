@@ -24,7 +24,10 @@ app.secret_key = os.getenv('SECRET_KEY')
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-# 改成從環境變數讀取
+# 👇 補上這一行，明確告訴它不要用 SSL (因為我們用的是 TLS)
+app.config['MAIL_USE_SSL'] = False 
+
+# 從環境變數讀取帳密
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = ('NCU市集管理員', os.getenv('MAIL_USERNAME'))
